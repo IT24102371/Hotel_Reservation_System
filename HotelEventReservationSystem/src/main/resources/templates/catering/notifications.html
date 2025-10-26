@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Notifications - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-bell me-2"></i>Notifications</h2>
+            <div>
+                <a class="btn btn-sm btn-outline-secondary me-2" th:classappend="${status}=='ALL' ? ' active'" th:href="@{/catering/notifications(status='ALL')}">All</a>
+                <a class="btn btn-sm btn-outline-secondary me-2" th:classappend="${status}=='UNREAD' ? ' active'" th:href="@{/catering/notifications(status='UNREAD')}">Unread</a>
+                <a class="btn btn-sm btn-outline-secondary" th:classappend="${status}=='READ' ? ' active'" th:href="@{/catering/notifications(status='READ')}">Read</a>
+                <span class="badge bg-warning ms-2" th:if="${unreadCount > 0}" th:text="${unreadCount + ' unread'}">0 unread</span>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="card mb-4" th:if="${notifications != null and !notifications.empty}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0">Bulk Actions</h6>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <form th:action="@{/catering/notifications/mark-all-read}" method="post" style="display:inline" class="me-2">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-check-double"></i> Mark All Read
+                            </button>
+                        </form>
+                        <form th:action="@{/catering/notifications/delete-all}" method="post" style="display:inline" 
+                              onsubmit="return confirm('Are you sure you want to delete ALL notifications? This action cannot be undone.')">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i> Delete All
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <!-- Compose Notification -->
+                <div class="mb-4" th:if="${showCompose}">
+                    <h5 class="mb-3"><i class="fas fa-paper-plane me-2"></i>Send Notification</h5>
+                    <form th:action="@{/catering/notifications/send}" method="post" class="row g-2 align-items-end">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="col-md-3">
+                            <label class="form-label">Target</label>
+                            <select class="form-select" name="targetType" id="targetType" onchange="toggleTargetFields()">
+                                <option value="ROLE">Role</option>
+                                <option value="USER">Specific User</option>
+                                <option value="ALL_GUESTS">All Guests</option>
+                                <option value="ALL_USERS">All Users</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="roleField">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" name="roleName">
+                                <option th:each="r : ${roles}" th:text="${r}" th:value="${r}">ROLE</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-none" id="userField">
+                            <label class="form-label">User ID</label>
+                            <input type="number" class="form-control" name="userId" placeholder="Enter user ID" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-select" name="alertType">
+                                <option th:each="t : ${alertTypes}" th:text="${t}" th:value="${t}">TYPE</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" name="message" rows="2" placeholder="Enter message" required></textarea>
+                        </div>
+                        <div class="col-md-12 text-end">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i>Send</button>
+                        </div>
+                    </form>
+                </div>
+                <div th:if="${notifications == null or notifications.empty}" class="text-center py-4">
+                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No notifications</h5>
+                    <p class="text-muted">You're all caught up!</p>
+                </div>
+
+                <div th:if="${notifications != null and !notifications.empty}">
+                    <form id="bulkForm" th:action="@{/catering/notifications/bulk-delete}" method="post">
+                        <div th:each="notification : ${notifications}" class="card mb-3">
+                            <div class="card-body" th:classappend="${!notification.isRead} ? 'bg-light'">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   th:name="notificationIds" 
+                                                   th:value="${notification.notificationId}"
+                                                   th:id="'notification-' + ${notification.notificationId}">
+                                            <label class="form-check-label" th:for="'notification-' + ${notification.notificationId}">
+                                                <h6 class="card-title mb-1">
+                                                    <i class="fas fa-bell me-2" 
+                                                       th:classappend="${notification.alertType.name().equals('BOOKING_CONFIRMATION')} ? 'text-success' : 
+                                                                      (${notification.alertType.name().equals('BOOKING_CANCELLATION')} ? 'text-danger' : 
+                                                                      (${notification.alertType.name().equals('CATERING_CONFIRMED')} ? 'text-info' : 'text-warning'))"></i>
+                                                    <span th:text="${notification.alertType}">ALERT</span>
+                                                </h6>
+                                            </label>
+                                        </div>
+                                        <p class="card-text mb-1" th:text="${notification.messageContent}">Notification message</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            <span th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 10:30</span>
+                                        </small>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div th:if="${!notification.isRead}">
+                                            <form th:action="@{/catering/notifications/{id}/mark-read(id=${notification.notificationId})}" 
+                                                  method="post" style="display:inline" class="me-1">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-check"></i> Mark Read
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <form th:action="@{/catering/notifications/{id}/delete(id=${notification.notificationId})}" 
+                                              method="post" style="display:inline"
+                                              onsubmit="return confirm('Are you sure you want to delete this notification?')">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                        <span th:if="${notification.isRead}" class="badge bg-success">Read</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bulk Actions for Selected Items -->
+                        <div class="text-center mt-3" th:if="${notifications != null and !notifications.empty}">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAll()">
+                                <i class="fas fa-check-square"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="deselectAll()">
+                                <i class="fas fa-square"></i> Deselect All
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-danger" 
+                                    onclick="return confirm('Are you sure you want to delete the selected notifications?')">
+                                <i class="fas fa-trash"></i> Delete Selected
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTargetFields() {
+            const type = document.getElementById('targetType').value;
+            const roleField = document.getElementById('roleField');
+            const userField = document.getElementById('userField');
+            if (roleField && userField) {
+                roleField.classList.toggle('d-none', type !== 'ROLE');
+                userField.classList.toggle('d-none', type !== 'USER');
+            }
+        }
+        function selectAll() {
+            document.querySelectorAll('input[type="checkbox"][name="notificationIds"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+        
+        function deselectAll() {
+            document.querySelectorAll('input[type="checkbox"][name="notificationIds"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+    </script>
+</body>
+</html>
