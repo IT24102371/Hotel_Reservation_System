@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Inventory Tracker - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-boxes me-2"></i>Supply Checklist</h2>
+            <a href="/catering/tasks" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Tasks
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Event Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Reference:</strong> <code th:text="${booking.referenceCode}">REF123</code></p>
+                                <p><strong>Event Type:</strong> <span th:text="${booking.eventType}">Wedding</span></p>
+                                <p><strong>Date:</strong> <span th:text="${#temporals.format(booking.eventDate, 'MMM dd, yyyy')}">Jan 15, 2024</span></p>
+                                <p><strong>Guest Count:</strong> <span th:text="${booking.guestCount}">100</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p th:if="${booking.cateringPreferences?.mealType != null}">
+                                    <strong>Meal Type:</strong> <span th:text="${booking.cateringPreferences.mealType}">DINNER</span>
+                                </p>
+                                <p th:if="${booking.cateringPreferences?.servingStyle != null}">
+                                    <strong>Serving Style:</strong> <span th:text="${booking.cateringPreferences.servingStyle}">BUFFET</span>
+                                </p>
+                                <p th:if="${booking.cateringPreferences?.cuisineType != null}">
+                                    <strong>Cuisine:</strong> <span th:text="${booking.cateringPreferences.cuisineType}">Italian</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supply Checklist -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Supply Checklist</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="printChecklist()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${supplyChecklist.empty}" class="text-center py-4">
+                            <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No supply items</h5>
+                            <p class="text-muted">No catering preferences found for this event.</p>
+                        </div>
+
+                        <div th:if="${!supplyChecklist.empty}" class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="50">✓</th>
+                                        <th>Item</th>
+                                        <th>Status</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${supplyChecklist}">
+                                        <td>
+                                            <input type="checkbox" class="form-check-input">
+                                        </td>
+                                        <td th:text="${item}">Plates: 110 pieces</td>
+                                        <td>
+                                            <span class="badge bg-warning">Pending</span>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm" placeholder="Add notes...">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Event Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Guest Count</h6>
+                            <p class="text-muted" th:text="${booking.guestCount}">100</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Meal Type</h6>
+                            <p class="text-muted" th:text="${booking.cateringPreferences?.mealType ?: 'Not specified'}">DINNER</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Serving Style</h6>
+                            <p class="text-muted" th:text="${booking.cateringPreferences?.servingStyle ?: 'Not specified'}">BUFFET</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Special Requirements</h6>
+                            <p class="text-muted" th:text="${booking.cateringPreferences?.dietaryRestrictions ?: 'None'}">Vegetarian</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Quick Calculations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Plates needed:</strong> <span th:text="${booking.guestCount + 10}">110</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Napkins needed:</strong> <span th:text="${booking.guestCount * 2}">200</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Water bottles:</strong> <span th:text="${booking.guestCount * 2}">200</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Estimated cost:</strong> $<span th:text="${booking.guestCount * 25}">2,500</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="markAllComplete()">
+                                <i class="fas fa-check me-1"></i>Mark All Complete
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="resetChecklist()">
+                                <i class="fas fa-undo me-1"></i>Reset Checklist
+                            </button>
+                            <a th:href="@{/catering/confirmation/{id}(id=${booking.bookingId})}" class="btn btn-outline-info">
+                                <i class="fas fa-utensils me-1"></i>Back to Confirmation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function printChecklist() {
+            window.print();
+        }
+
+        function markAllComplete() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+
+        function resetChecklist() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+    </script>
+</body>
+</html>

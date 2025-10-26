@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Room Setup - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-cog me-2"></i>Room/Hall Setup</h2>
+            <a href="/coordinator/tasks" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Tasks
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Event Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Event Information</h6>
+                                <p><strong>Reference:</strong> <code th:text="${booking.referenceCode}">REF123</code></p>
+                                <p><strong>Event Type:</strong> <span th:text="${booking.eventType}">Wedding</span></p>
+                                <p><strong>Date:</strong> <span th:text="${#temporals.format(booking.eventDate, 'MMM dd, yyyy')}">Jan 15, 2024</span></p>
+                                <p><strong>Time:</strong> <span th:text="${booking.startTime + ' - ' + booking.endTime}">10:00 - 12:00</span></p>
+                                <p><strong>Venue:</strong> <span th:text="${booking.venue.venueName}">Grand Ballroom</span></p>
+                                <p><strong>Guest Count:</strong> <span th:text="${booking.guestCount}">100</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Guest Information</h6>
+                                <p><strong>Name:</strong> <span th:text="${booking.user.firstName + ' ' + booking.user.lastName}">John Doe</span></p>
+                                <p><strong>Email:</strong> <span th:text="${booking.user.email}">john@example.com</span></p>
+                                <p><strong>Phone:</strong> <span th:text="${booking.user.phone ?: 'N/A'}">+1-555-0123</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decor Preferences -->
+                <div class="card mt-4" th:if="${booking.decorPreferences != null}">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Guest Decor Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p th:if="${booking.decorPreferences.theme != null}">
+                                    <strong>Theme:</strong> <span th:text="${booking.decorPreferences.theme}">Elegant</span>
+                                </p>
+                                <p th:if="${booking.decorPreferences.colorScheme != null}">
+                                    <strong>Color Scheme:</strong> <span th:text="${booking.decorPreferences.colorScheme}">Gold & White</span>
+                                </p>
+                                <p th:if="${booking.decorPreferences.flowerArrangements != null}">
+                                    <strong>Flower Arrangements:</strong> <span th:text="${booking.decorPreferences.flowerArrangements}">Roses</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p th:if="${booking.decorPreferences.lightingPreferences != null}">
+                                    <strong>Lighting:</strong> <span th:text="${booking.decorPreferences.lightingPreferences}">Soft</span>
+                                </p>
+                                <p th:if="${booking.decorPreferences.additionalDecorRequests != null}">
+                                    <strong>Additional Requests:</strong> <span th:text="${booking.decorPreferences.additionalDecorRequests}">None</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Confirmation Form -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Setup Confirmation</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/coordinator/setup/{id}/confirm(id=${booking.bookingId})}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Setup Status</label>
+                                <select name="setupStatus" class="form-select">
+                                    <option value="">Select status...</option>
+                                    <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="NEEDS_ATTENTION">Needs Attention</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Coordinator Notes</label>
+                                <textarea name="coordinatorNotes" class="form-control" rows="4" 
+                                          placeholder="Add setup notes, special requirements, or issues encountered..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Confirm Setup
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Setup Checklist</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check1">
+                            <label class="form-check-label" for="check1">Venue layout confirmed</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check2">
+                            <label class="form-check-label" for="check2">Decorations placed</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check3">
+                            <label class="form-check-label" for="check3">Lighting adjusted</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check4">
+                            <label class="form-check-label" for="check4">Sound system tested</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check5">
+                            <label class="form-check-label" for="check5">Tables and chairs arranged</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check6">
+                            <label class="form-check-label" for="check6">Special requests addressed</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/coordinator/calendar" class="btn btn-outline-primary">
+                                <i class="fas fa-calendar me-1"></i>Check Availability
+                            </a>
+                            <a href="/coordinator/notifications" class="btn btn-outline-info">
+                                <i class="fas fa-bell me-1"></i>View Notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

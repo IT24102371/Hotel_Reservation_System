@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>QR Scanner - Hotel Event Reservation System</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-camera me-2"></i>QR Code Scanner</h2>
+            <a href="/reception/verify-booking" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Verification
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Scanner</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="scanner-container" style="width: 100%; height: 400px; background: #f8f9fa; border: 2px dashed #dee2e6; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <div class="text-center">
+                                <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Camera access required for QR scanning</p>
+                                <button id="start-scanner" class="btn btn-primary">
+                                    <i class="fas fa-play me-1"></i>Start Scanner
+                                </button>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Make sure to allow camera permissions when prompted
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="scanner" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>Click "Start Scanner" to begin</li>
+                            <li>Allow camera access when prompted</li>
+                            <li>Point camera at QR code</li>
+                            <li>Wait for automatic detection</li>
+                            <li>Booking details will be displayed</li>
+                        </ol>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Tip:</strong> Ensure good lighting and hold the QR code steady for best results.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-keyboard me-2"></i>Manual Entry</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Can't scan? Enter the reference code manually:</p>
+                        <form th:action="@{/reception/verify-booking}" method="post">
+                            <div class="mb-3">
+                                <input type="text" name="referenceCode" class="form-control" 
+                                       placeholder="Enter reference code">
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-1"></i>Search
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Result Modal -->
+        <div id="scanResultModal" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">QR Code Detected</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Reference Code: <code id="scanned-code">REF123</code></p>
+                        <p>Redirecting to booking verification...</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="verify-booking">Verify Booking</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scannerActive = false;
+        let video = null;
+        let canvas = null;
+        let context = null;
+        let scanningInterval = null;
+        
+        document.getElementById('start-scanner').addEventListener('click', function() {
+            if (!scannerActive) {
+                startScanner();
+            }
+        });
+
+        // Debug function to check browser capabilities
+        function checkBrowserSupport() {
+            console.log('=== Browser Support Check ===');
+            console.log('navigator.mediaDevices:', !!navigator.mediaDevices);
+            console.log('getUserMedia:', !!navigator.mediaDevices?.getUserMedia);
+            console.log('HTTPS:', location.protocol === 'https:');
+            console.log('User Agent:', navigator.userAgent);
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.enumerateDevices().then(devices => {
+                    console.log('Available devices:', devices);
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    console.log('Video devices:', videoDevices);
+                });
+            }
+        }
+
+        // Run browser support check on page load
+        window.addEventListener('load', checkBrowserSupport);
+
+        function startScanner() {
+            const container = document.getElementById('scanner-container');
+            const scanner = document.getElementById('scanner');
+            
+            console.log('Starting scanner...');
+            
+            // Check if getUserMedia is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Camera access is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+                return;
+            }
+            
+            container.style.display = 'none';
+            scanner.style.display = 'block';
+            
+            // Create video element
+            video = document.createElement('video');
+            video.style.width = '100%';
+            video.style.height = '400px';
+            video.style.objectFit = 'cover';
+            video.setAttribute('autoplay', 'true');
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('muted', 'true');
+            scanner.appendChild(video);
+            
+            // Create canvas for QR detection
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+            
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x mb-2"></i><p>Requesting camera access...</p></div>';
+            loadingDiv.style.position = 'absolute';
+            loadingDiv.style.top = '50%';
+            loadingDiv.style.left = '50%';
+            loadingDiv.style.transform = 'translate(-50%, -50%)';
+            loadingDiv.style.zIndex = '1000';
+            loadingDiv.style.background = 'rgba(255,255,255,0.9)';
+            loadingDiv.style.padding = '20px';
+            loadingDiv.style.borderRadius = '8px';
+            scanner.appendChild(loadingDiv);
+            
+            // Request camera access with fallback options
+            const constraints = {
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            };
+            
+            console.log('Requesting camera access with constraints:', constraints);
+            
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(stream) {
+                    console.log('Camera access granted');
+                    loadingDiv.remove();
+                    
+                    video.srcObject = stream;
+                    video.play().then(() => {
+                        console.log('Video started playing');
+                        scannerActive = true;
+                        
+                        // Start scanning loop
+                        scanningInterval = setInterval(scanQRCode, 100);
+                    }).catch(err => {
+                        console.error('Video play failed:', err);
+                        alert('Failed to start video stream: ' + err.message);
+                        stopScanner();
+                    });
+                    
+                }).catch(function(err) {
+                    console.error('Camera access failed:', err);
+                    loadingDiv.remove();
+                    
+                    let errorMessage = 'Failed to access camera. ';
+                    if (err.name === 'NotAllowedError') {
+                        errorMessage += 'Please allow camera access and try again.';
+                    } else if (err.name === 'NotFoundError') {
+                        errorMessage += 'No camera found on this device.';
+                    } else if (err.name === 'NotSupportedError') {
+                        errorMessage += 'Camera access is not supported. Please use HTTPS.';
+                    } else {
+                        errorMessage += 'Error: ' + err.message;
+                    }
+                    
+                    alert(errorMessage);
+                    container.style.display = 'flex';
+                    scanner.style.display = 'none';
+                    scannerActive = false;
+                });
+        }
+
+        function scanQRCode() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    console.log('QR Code detected:', code.data);
+                    stopScanner();
+                    
+                    // Show result modal
+                    document.getElementById('scanned-code').textContent = code.data;
+                    const modal = new bootstrap.Modal(document.getElementById('scanResultModal'));
+                    modal.show();
+                    
+                    // Set up verify button
+                    document.getElementById('verify-booking').onclick = function() {
+                        window.location.href = '/reception/verify-booking?ref=' + encodeURIComponent(code.data);
+                    };
+                }
+            }
+        }
+
+        function stopScanner() {
+            if (scannerActive) {
+                scannerActive = false;
+                if (scanningInterval) {
+                    clearInterval(scanningInterval);
+                    scanningInterval = null;
+                }
+                if (video && video.srcObject) {
+                    const tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+                if (video) {
+                    video.remove();
+                    video = null;
+                }
+            }
+        }
+
+        // Stop scanner when page is unloaded
+        window.addEventListener('beforeunload', function() {
+            stopScanner();
+        });
+    </script>
+</body>
+</html>

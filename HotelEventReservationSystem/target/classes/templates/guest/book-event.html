@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Book Event - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <h2 class="mb-4"><i class="fas fa-calendar-plus me-2"></i>Book an Event</h2>
+
+        <!-- Mandatory Fields Notice -->
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Required Fields:</strong> Fields marked with <span class="text-danger">*</span> are mandatory and must be filled before submitting your booking.
+        </div>
+
+        <form th:action="@{/guest/book-event}" method="post" class="needs-validation" novalidate id="bookingForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Event Type <span class="text-danger">*</span></label>
+                    <input type="text" name="eventType" class="form-control" placeholder="e.g., Wedding, Conference" required>
+                    <div class="invalid-feedback">Please enter the event type.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Event Date <span class="text-danger">*</span></label>
+                    <input type="date" name="eventDate" class="form-control" required>
+                    <div class="invalid-feedback">Please select the event date.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                    <input type="time" name="startTime" class="form-control" required>
+                    <div class="invalid-feedback">Please select start time.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                    <input type="time" name="endTime" class="form-control" required>
+                    <div class="invalid-feedback">Please select end time.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Guests <span class="text-danger">*</span></label>
+                    <input type="number" name="guestCount" min="1" class="form-control" required>
+                    <div class="invalid-feedback">Please enter number of guests (minimum 1).</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Venue <span class="text-danger">*</span></label>
+                    <select name="venueId" class="form-select" required>
+                        <option value="" disabled selected>Select a venue</option>
+                        <option th:each="v : ${venues}" th:value="${v.venueId}" th:text="${v.venueName + ' (' + v.capacity + ')'}"></option>
+                    </select>
+                    <div class="invalid-feedback">Please select a venue.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Special Requests</label>
+                    <input type="text" name="specialRequests" class="form-control" placeholder="Optional">
+                </div>
+
+                <div class="col-12">
+                    <hr>
+                    <h5 class="mb-3"><i class="fas fa-paint-brush me-2"></i>Décor Preferences</h5>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Theme</label>
+                    <input type="text" name="theme" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Color Scheme</label>
+                    <input type="text" name="colorScheme" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Flower Arrangements</label>
+                    <input type="text" name="flowerArrangements" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Lighting Preferences</label>
+                    <input type="text" name="lightingPreferences" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Additional Requests</label>
+                    <input type="text" name="additionalDecorRequests" class="form-control">
+                </div>
+
+                <div class="col-12">
+                    <hr>
+                    <h5 class="mb-3"><i class="fas fa-utensils me-2"></i>Catering Preferences</h5>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Meal Type</label>
+                    <select name="mealType" class="form-select">
+                        <option value="" selected>None</option>
+                        <option th:each="t : ${T(com.hotel.eventreservation.model.CateringPreferences.MealType).values()}" th:value="${t.name()}" th:text="${t.name()}"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cuisine Type</label>
+                    <input type="text" name="cuisineType" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Dietary Restrictions</label>
+                    <input type="text" name="dietaryRestrictions" class="form-control" placeholder="e.g., Vegan, Halal">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Special Dishes</label>
+                    <input type="text" name="specialDishes" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Beverage Preferences</label>
+                    <input type="text" name="beveragePreferences" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Serving Style</label>
+                    <select name="servingStyle" class="form-select">
+                        <option value="" selected>None</option>
+                        <option th:each="s : ${T(com.hotel.eventreservation.model.CateringPreferences.ServingStyle).values()}" th:value="${s.name()}" th:text="${s.name()}"></option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-check me-1"></i>Submit Booking
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .field-error {
+            border: 2px solid #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        .field-error:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        .mandatory-field {
+            position: relative;
+        }
+        
+        .mandatory-field::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #dc3545;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        
+        .validation-summary {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .validation-summary.show {
+            display: block;
+        }
+        
+        .validation-summary ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .validation-summary li {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('bookingForm');
+            const validationSummary = document.createElement('div');
+            validationSummary.className = 'validation-summary';
+            validationSummary.innerHTML = `
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul id="validationList"></ul>
+            `;
+            
+            // Insert validation summary after the form title
+            const formTitle = document.querySelector('h2');
+            formTitle.parentNode.insertBefore(validationSummary, formTitle.nextSibling);
+            
+            // Helper function to convert time to minutes
+            function timeToMinutes(timeString) {
+                const [hours, minutes] = timeString.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+            
+            // Enhanced validation function
+            function validateForm(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Clear previous validation states
+                clearValidationStates();
+                
+                const requiredFields = form.querySelectorAll('[required]');
+                const errors = [];
+                let hasErrors = false;
+                
+                requiredFields.forEach(function(field) {
+                    const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                    
+                    if (!field.value.trim()) {
+                        // Add error styling
+                        field.classList.add('field-error');
+                        fieldContainer.classList.add('mandatory-field');
+                        
+                        // Add to errors list
+                        const label = fieldContainer.querySelector('label');
+                        const fieldName = label ? label.textContent.replace(' *', '').trim() : field.name;
+                        errors.push(`${fieldName} is required`);
+                        hasErrors = true;
+                    } else {
+                        // Remove error styling if field is now valid
+                        field.classList.remove('field-error');
+                        fieldContainer.classList.remove('mandatory-field');
+                    }
+                });
+                
+                // Special validation for number fields
+                const numberFields = form.querySelectorAll('input[type="number"]');
+                numberFields.forEach(function(field) {
+                    if (field.value && (isNaN(field.value) || parseInt(field.value) < 1)) {
+                        const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                        field.classList.add('field-error');
+                        fieldContainer.classList.add('mandatory-field');
+                        
+                        const label = fieldContainer.querySelector('label');
+                        const fieldName = label ? label.textContent.replace(' *', '').trim() : field.name;
+                        errors.push(`${fieldName} must be a valid number (minimum 1)`);
+                        hasErrors = true;
+                    }
+                });
+                
+                // Special validation for date fields
+                const dateFields = form.querySelectorAll('input[type="date"]');
+                dateFields.forEach(function(field) {
+                    if (field.value) {
+                        const selectedDate = new Date(field.value);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        if (selectedDate < today) {
+                            const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                            field.classList.add('field-error');
+                            fieldContainer.classList.add('mandatory-field');
+                            
+                            const label = fieldContainer.querySelector('label');
+                            const fieldName = label ? label.textContent.replace(' *', '').trim() : field.name;
+                            errors.push(`${fieldName} must be in the future`);
+                            hasErrors = true;
+                        }
+                    }
+                });
+                
+                // Special validation for time fields
+                const timeFields = form.querySelectorAll('input[type="time"]');
+                if (timeFields.length >= 2) {
+                    const startTime = timeFields[0].value;
+                    const endTime = timeFields[1].value;
+                    
+                    if (startTime && endTime) {
+                        if (startTime >= endTime) {
+                            timeFields.forEach(function(field) {
+                                const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                                field.classList.add('field-error');
+                                fieldContainer.classList.add('mandatory-field');
+                            });
+                            errors.push('End time must be after start time');
+                            hasErrors = true;
+                        }
+                        
+                        // Check if event is at least 1 hour long
+                        const startMinutes = timeToMinutes(startTime);
+                        const endMinutes = timeToMinutes(endTime);
+                        const duration = endMinutes - startMinutes;
+                        
+                        if (duration < 60) {
+                            timeFields.forEach(function(field) {
+                                const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                                field.classList.add('field-error');
+                                fieldContainer.classList.add('mandatory-field');
+                            });
+                            errors.push('Event duration must be at least 1 hour');
+                            hasErrors = true;
+                        }
+                    }
+                }
+                
+                if (hasErrors) {
+                    // Show validation summary
+                    const validationList = document.getElementById('validationList');
+                    validationList.innerHTML = errors.map(error => `<li>${error}</li>`).join('');
+                    validationSummary.classList.add('show');
+                    
+                    // Scroll to first error field
+                    const firstErrorField = form.querySelector('.field-error');
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.focus();
+                    }
+                } else {
+                    // Hide validation summary and submit form
+                    validationSummary.classList.remove('show');
+                    form.submit();
+                }
+                
+                form.classList.add('was-validated');
+            }
+            
+            function clearValidationStates() {
+                // Remove all error styling
+                const errorFields = form.querySelectorAll('.field-error');
+                errorFields.forEach(field => field.classList.remove('field-error'));
+                
+                const errorContainers = form.querySelectorAll('.mandatory-field');
+                errorContainers.forEach(container => container.classList.remove('mandatory-field'));
+                
+                // Hide validation summary
+                validationSummary.classList.remove('show');
+            }
+            
+            // Add real-time validation
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(function(field) {
+                field.addEventListener('blur', function() {
+                    const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                    
+                    if (!field.value.trim()) {
+                        field.classList.add('field-error');
+                        fieldContainer.classList.add('mandatory-field');
+                    } else {
+                        field.classList.remove('field-error');
+                        fieldContainer.classList.remove('mandatory-field');
+                    }
+                });
+                
+                field.addEventListener('input', function() {
+                    if (field.value.trim()) {
+                        field.classList.remove('field-error');
+                        const fieldContainer = field.closest('.col-md-6, .col-md-3, .col-md-1, .col-md-4, .col-md-2');
+                        fieldContainer.classList.remove('mandatory-field');
+                    }
+                });
+            });
+            
+            // Attach validation to form submit
+            form.addEventListener('submit', validateForm);
+        });
+    </script>
+</body>
+</html>
+

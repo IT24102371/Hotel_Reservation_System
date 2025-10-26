@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>My Bookings - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-list me-2"></i>My Bookings</h2>
+            <a href="/guest/book-event" class="btn btn-primary">
+                <i class="fas fa-calendar-plus me-1"></i>Book New Event
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div th:if="${bookings == null or bookings.empty}" class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No bookings found</h5>
+                </div>
+
+                <div th:if="${bookings != null and !bookings.empty}" class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Event Type</th>
+                                <th>Date</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Venue</th>
+                                <th>Guests</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="b : ${bookings}">
+                                <td><code th:text="${b.referenceCode}">REF</code></td>
+                                <td th:text="${b.eventType}">Event</td>
+                                <td th:text="${#temporals.format(b.eventDate, 'yyyy-MM-dd')}">2025-01-01</td>
+                                <td th:text="${b.startTime}">10:00</td>
+                                <td th:text="${b.endTime}">12:00</td>
+                                <td th:text="${b.venue.venueName}">Hall</td>
+                                <td th:text="${b.guestCount}">100</td>
+                                <td>
+                                    <span class="badge status-badge" 
+                                          th:classappend="${b.bookingStatus.name().equals('PENDING')} ? 'bg-warning' : (${b.bookingStatus.name().equals('CONFIRMED')} ? 'bg-success' : (${b.bookingStatus.name().equals('CANCELLED')} ? 'bg-danger' : 'bg-info'))"
+                                          th:text="${b.bookingStatus}">PENDING</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/guest/booking-confirmation/{id}(id=${b.bookingId})}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a th:if="${b.bookingStatus.name().equals('PENDING')}" th:href="@{/guest/edit-booking/{id}(id=${b.bookingId})}" class="btn btn-sm btn-outline-warning" title="Edit Booking">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form th:if="${b.bookingStatus.name().equals('PENDING')}" th:action="@{/guest/cancel-booking/{id}(id=${b.bookingId})}" method="post" style="display:inline">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <button class="btn btn-sm btn-outline-danger" title="Cancel Booking" onclick="return confirm('Cancel this booking?')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+</body>
+</html>
+

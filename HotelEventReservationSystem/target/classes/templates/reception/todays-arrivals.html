@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Today's Arrivals - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-calendar-day me-2"></i>Today's Arrivals</h2>
+            <div>
+                <span class="badge bg-primary me-2" th:text="${bookings.size()}">0</span>
+                <a href="/reception/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+                        <h4 class="card-title" th:text="${bookings.size()}">0</h4>
+                        <p class="card-text">Total Expected</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4 class="card-title">0</h4>
+                        <p class="card-text">Checked In</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4 class="card-title">0</h4>
+                        <p class="card-text">Pending</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                        <h4 class="card-title">0</h4>
+                        <p class="card-text">No Show</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Arrival List</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${bookings.empty}" class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No arrivals scheduled for today</h5>
+                    <p class="text-muted">All clear for today!</p>
+                </div>
+
+                <div th:if="${!bookings.empty}" class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Event Type</th>
+                                <th>Time</th>
+                                <th>Venue</th>
+                                <th>Guest Name</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="booking : ${bookings}">
+                                <td><code th:text="${booking.referenceCode}">REF123</code></td>
+                                <td th:text="${booking.eventType}">Wedding</td>
+                                <td th:text="${booking.startTime + ' - ' + booking.endTime}">10:00 - 12:00</td>
+                                <td th:text="${booking.venue.venueName}">Grand Ballroom</td>
+                                <td th:text="${booking.user.firstName + ' ' + booking.user.lastName}">John Doe</td>
+                                <td>
+                                    <div th:text="${booking.user.phone ?: 'N/A'}">+1-555-0123</div>
+                                    <small class="text-muted" th:text="${booking.user.email}">john@example.com</small>
+                                </td>
+                                <td>
+                                    <span class="badge status-badge" 
+                                          th:classappend="${booking.bookingStatus.name().equals('PENDING')} ? 'bg-warning' : 
+                                                         (${booking.bookingStatus.name().equals('CONFIRMED')} ? 'bg-success' : 
+                                                         (${booking.bookingStatus.name().equals('CANCELLED')} ? 'bg-danger' : 'bg-info'))"
+                                          th:text="${booking.bookingStatus}">CONFIRMED</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/reception/verify-booking?ref=${booking.referenceCode}}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-search"></i> Verify
+                                        </a>
+                                        <form th:if="${booking.bookingStatus.name().equals('CONFIRMED')}" 
+                                              th:action="@{/reception/check-in/{id}(id=${booking.bookingId})}" 
+                                              method="post" style="display:inline">
+                                            <button class="btn btn-sm btn-success" 
+                                                    onclick="return confirm('Check in this guest?')">
+                                                <i class="fas fa-check"></i> Check In
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-qrcode fa-2x text-primary mb-3"></i>
+                        <h5 class="card-title">Quick Verification</h5>
+                        <p class="card-text">Verify a booking using reference code or QR scanner.</p>
+                        <a href="/reception/verify-booking" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Verify Booking
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-camera fa-2x text-success mb-3"></i>
+                        <h5 class="card-title">QR Scanner</h5>
+                        <p class="card-text">Use the QR scanner for quick guest check-in.</p>
+                        <a href="/reception/qr-scanner" class="btn btn-success">
+                            <i class="fas fa-camera me-1"></i>Open Scanner
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Availability Calendar - Hotel Event Reservation System</title>
+    <style>
+        .calendar-day {
+            background: white;
+            min-height: 120px;
+            padding: 8px;
+            position: relative;
+        }
+        .calendar-day.other-month {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+        .calendar-day.today {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+        .availability-slot {
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            margin: 1px 0;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .availability-slot:hover {
+            transform: scale(1.05);
+        }
+        .slot-available {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .slot-booked {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .slot-maintenance {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .slot-blocked {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .booking-info {
+            margin-top: 2px;
+            font-size: 0.7rem;
+            line-height: 1.2;
+        }
+        .booking-info .event-type {
+            font-weight: bold;
+            color: #721c24;
+        }
+        .booking-info .guest-name {
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-calendar me-2"></i>Venue Availability Calendar</h2>
+            <a href="/coordinator/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Calendar View</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filter Section -->
+                        <div class="mb-3">
+                            <form method="get" action="/coordinator/calendar" class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="venueId" class="form-label">Venue</label>
+                                    <select name="venueId" id="venueId" class="form-select">
+                                        <option value="">All Venues</option>
+                                        <option th:each="venue : ${venues}" 
+                                                th:value="${venue.venueId}" 
+                                                th:text="${venue.venueName}"
+                                                th:selected="${selectedVenueId == venue.venueId}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="month" class="form-label">Month</label>
+                                    <input type="month" name="month" id="month" class="form-control" 
+                                           th:value="${targetMonth.toString().substring(0,7)}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Apply Filters
+                                        </button>
+                                        <a href="/coordinator/calendar" class="btn btn-secondary">
+                                            <i class="fas fa-refresh"></i> Clear
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #dee2e6; border-radius: 8px; overflow: hidden;">
+                            <!-- Day headers -->
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Sunday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Monday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Tuesday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Wednesday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Thursday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Friday</small>
+                            </div>
+                            <div class="calendar-day text-center fw-bold bg-light" style="min-height: 40px; padding: 10px;">
+                                <small>Saturday</small>
+                            </div>
+
+                            <!-- Calendar days -->
+                            <div th:each="day : ${calendarDays}" 
+                                 th:class="'calendar-day' + (${day.equals(T(java.time.LocalDate).now())} ? ' today' : '') + (${!day.getMonth().equals(targetMonth.getMonth())} ? ' other-month' : '')"
+                                 style="background: white; min-height: 120px; padding: 8px; position: relative;">
+                                
+                                <div class="day-number fw-bold mb-2" th:text="${day.getDayOfMonth()}">1</div>
+                                
+                                <!-- Availability slots for this day -->
+                                <div th:each="slot : ${groupedByDate.get(day)}" 
+                                     th:class="'availability-slot slot-' + ${slot.status.name().toLowerCase()}"
+                                     th:title="${slot.venue.venueName + ' - ' + slot.startTime + ' to ' + slot.endTime + ' (' + slot.status + ')'}"
+                                     style="font-size: 0.75rem; padding: 2px 4px; margin: 1px 0; border-radius: 3px; cursor: pointer;">
+                                    <div th:text="${slot.venue.venueName}">Venue</div>
+                                    <div th:text="${slot.startTime + '-' + slot.endTime}">Time</div>
+                                    <!-- Show booking information for booked slots -->
+                                    <div th:if="${slot.status.name() == 'BOOKED' and bookingMap != null and bookingMap.containsKey(slot.availabilityId)}" 
+                                         th:with="booking=${bookingMap.get(slot.availabilityId)}"
+                                         class="booking-info">
+                                        <div th:text="${booking.eventType}" class="event-type fw-bold"></div>
+                                        <div th:text="${booking.guest.firstName + ' ' + booking.guest.lastName}" class="guest-name"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-building me-2"></i>Venues</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${venues.empty}" class="text-center py-3">
+                            <i class="fas fa-building fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No venues available</p>
+                        </div>
+                        <div th:if="${!venues.empty}">
+                            <div th:each="venue : ${venues}" class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1" th:text="${venue.venueName}">Venue Name</h6>
+                                        <small class="text-muted" th:text="${venue.capacity + ' capacity'}">100 capacity</small>
+                                    </div>
+                                    <span class="badge bg-success">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Options</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Date Range</label>
+                            <input type="date" class="form-control mb-2" id="startDate">
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Venue Type</label>
+                            <select class="form-select">
+                                <option value="">All Types</option>
+                                <option value="HALL">Hall</option>
+                                <option value="ROOM">Room</option>
+                                <option value="OUTDOOR">Outdoor</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Capacity</label>
+                            <input type="range" class="form-range" min="10" max="500" value="100">
+                            <small class="text-muted">Minimum: 100 guests</small>
+                        </div>
+                        <button class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Legend</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge bg-success me-2">●</span>
+                            <small>Available</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning me-2">●</span>
+                            <small>Partially Booked</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger me-2">●</span>
+                            <small>Fully Booked</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary me-2">●</span>
+                            <small>Maintenance</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>User Management - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-users me-2"></i>User Management</h2>
+            <a href="/manager/users/create" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i>Create New User
+            </a>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Users</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${users.empty}" class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No users found</h5>
+                    <p class="text-muted">Create your first user to get started!</p>
+                </div>
+                
+                <div th:if="${!users.empty}" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Roles</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="user : ${users}">
+                                <td th:text="${user.userId}">1</td>
+                                <td>
+                                    <strong th:text="${user.username}">john_doe</strong>
+                                </td>
+                                <td th:text="${user.firstName + ' ' + user.lastName}">John Doe</td>
+                                <td th:text="${user.email}">john@example.com</td>
+                                <td th:text="${user.phone}">+1234567890</td>
+                                <td>
+                                    <span th:each="role, iterStat : ${user.roles}" 
+                                          class="badge bg-info me-1"
+                                          th:text="${role.roleName}">GUEST</span>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${user.isActive} ? 'bg-success' : 'bg-danger'"
+                                          th:text="${user.isActive} ? 'Active' : 'Inactive'">Active</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <!-- Activate/Deactivate -->
+                                        <form th:if="${user.isActive}" 
+                                              th:action="@{/manager/users/{id}/deactivate(id=${user.userId})}" 
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="btn btn-sm btn-warning"
+                                                    onclick="return confirm('Are you sure you want to deactivate this user?')">
+                                                <i class="fas fa-user-times"></i>
+                                            </button>
+                                        </form>
+                                        <form th:if="${!user.isActive}" 
+                                              th:action="@{/manager/users/{id}/activate(id=${user.userId})}" 
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Change Password Modal Trigger -->
+                                        <button type="button" class="btn btn-sm btn-info" 
+                                                data-bs-toggle="modal" 
+                                                th:data-bs-target="'#changePasswordModal' + ${user.userId}">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                        
+                                        <!-- Assign Role Modal Trigger -->
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-bs-toggle="modal" 
+                                                th:data-bs-target="'#assignRoleModal' + ${user.userId}">
+                                            <i class="fas fa-user-tag"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modals -->
+        <div th:each="user : ${users}" th:fragment="changePasswordModal">
+            <div class="modal fade" th:id="'changePasswordModal' + ${user.userId}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Change Password for <span th:text="${user.username}"></span></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form th:action="@{/manager/users/{id}/change-password(id=${user.userId})}" method="post">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Change Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign Role Modals -->
+        <div th:each="user : ${users}" th:fragment="assignRoleModal">
+            <div class="modal fade" th:id="'assignRoleModal' + ${user.userId}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Assign Role to <span th:text="${user.username}"></span></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form th:action="@{/manager/staff/{id}/assign-role(id=${user.userId})}" method="post">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="roleName" class="form-label">Select Role</label>
+                                    <select class="form-select" id="roleName" name="roleName" required>
+                                        <option value="">Choose a role...</option>
+                                        <option value="GUEST">Guest</option>
+                                        <option value="GENERAL_MANAGER">General Manager</option>
+                                        <option value="EVENT_COORDINATOR">Event Coordinator</option>
+                                        <option value="CATERING_TEAM_LEADER">Catering Team Leader</option>
+                                        <option value="MARKETING_EXECUTIVE">Marketing Executive</option>
+                                        <option value="RECEPTIONIST">Receptionist</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Assign Role</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

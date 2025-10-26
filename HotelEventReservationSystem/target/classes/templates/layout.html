@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Hotel Event Reservation System'">Hotel Event Reservation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+        }
+        .qr-code {
+            max-width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:fragment="header">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-hotel me-2"></i>Hotel Event Reservation
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${user != null and user.hasRole('GUEST')}">
+                        <a class="nav-link" href="/guest/book-event">
+                            <i class="fas fa-calendar-plus me-1"></i>Book Event
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${user != null and user.hasRole('GUEST')}">
+                        <a class="nav-link" href="/guest/my-bookings">
+                            <i class="fas fa-list me-1"></i>My Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${user != null and (user.hasRole('GENERAL_MANAGER') or user.hasRole('EVENT_COORDINATOR') or user.hasRole('CATERING_TEAM_LEADER') or user.hasRole('MARKETING_EXECUTIVE') or user.hasRole('RECEPTIONIST'))}">
+                        <a class="nav-link" href="/manager/bookings">
+                            <i class="fas fa-calendar-check me-1"></i>Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${user != null and user.hasRole('MARKETING_EXECUTIVE')}">
+                        <a class="nav-link" href="/marketing/reports">
+                            <i class="fas fa-chart-bar me-1"></i>Reports
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown" th:if="${user != null}">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <span th:text="${user.firstName + ' ' + user.lastName}">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-edit me-1"></i>Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item" th:if="${user == null}">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${user == null}">
+                        <a class="nav-link" href="/register">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar for authenticated users -->
+            <div class="col-md-2 sidebar" th:if="${user != null}">
+                <div class="p-3">
+                    <h6 class="text-muted">Navigation</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/dashboard">
+                                <i class="fas fa-home me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/book-event">
+                                <i class="fas fa-calendar-plus me-1"></i>Book Event
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/my-bookings">
+                                <i class="fas fa-list me-1"></i>My Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/venues">
+                                <i class="fas fa-building me-1"></i>View Venues
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                        
+                        <!-- Staff Navigation -->
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/bookings">
+                                <i class="fas fa-calendar-check me-1"></i>All Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/staff">
+                                <i class="fas fa-users me-1"></i>Manage Staff
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/users">
+                                <i class="fas fa-user-cog me-1"></i>All Users
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/venues">
+                                <i class="fas fa-building me-1"></i>Manage Venues
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                            <a class="nav-link" href="/manager/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                            <a class="nav-link" href="/reception/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                            <a class="nav-link" href="/reception/verify-booking">
+                                <i class="fas fa-qrcode me-1"></i>Verify Booking
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                            <a class="nav-link" href="/reception/todays-arrivals">
+                                <i class="fas fa-calendar-day me-1"></i>Today's Arrivals
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                            <a class="nav-link" href="/reception/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                            <a class="nav-link" href="/marketing/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                            <a class="nav-link" href="/marketing/reports">
+                                <i class="fas fa-chart-bar me-1"></i>Reports
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                            <a class="nav-link" href="/marketing/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                            <a class="nav-link" href="/coordinator/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                            <a class="nav-link" href="/coordinator/tasks">
+                                <i class="fas fa-tasks me-1"></i>Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                            <a class="nav-link" href="/coordinator/calendar">
+                                <i class="fas fa-calendar me-1"></i>Calendar
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                            <a class="nav-link" href="/coordinator/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                            <a class="nav-link" href="/catering/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                            <a class="nav-link" href="/catering/tasks">
+                                <i class="fas fa-utensils me-1"></i>Catering Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                            <a class="nav-link" href="/catering/notifications">
+                                <i class="fas fa-bell me-1"></i>Notifications
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-md-10 main-content" th:classappend="${user == null ? 'col-md-12' : ''}">
+                <!-- Flash Messages -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Page Content -->
+                <div th:fragment="content">
+                    <!-- Content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Fragment -->
+    <div th:fragment="footer">
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <script>
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        </script>
+    </div>
+</body>
+</html>
+
+<!-- Layout fragment for template inheritance -->
+<div th:fragment="layout(title, content)" th:remove="tag">
+    <!DOCTYPE html>
+    <html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title th:text="${title} ?: 'Hotel Event Reservation System'">Hotel Event Reservation System</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        <style>
+            .navbar-brand {
+                font-weight: bold;
+            }
+            .sidebar {
+                min-height: 100vh;
+                background-color: #f8f9fa;
+            }
+            .main-content {
+                padding: 20px;
+            }
+            .card {
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                border: 1px solid rgba(0, 0, 0, 0.125);
+            }
+            .status-badge {
+                font-size: 0.75rem;
+            }
+            .qr-code {
+                max-width: 200px;
+                height: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Header Fragment -->
+        <div th:fragment="header">
+            <!-- Navigation -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-hotel me-2"></i>Hotel Event Reservation
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/book-event">
+                                <i class="fas fa-calendar-plus me-1"></i>Book Event
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and user.hasRole('GUEST')}">
+                            <a class="nav-link" href="/guest/my-bookings">
+                                <i class="fas fa-list me-1"></i>My Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and (user.hasRole('GENERAL_MANAGER') or user.hasRole('EVENT_COORDINATOR') or user.hasRole('CATERING_TEAM_LEADER') or user.hasRole('MARKETING_EXECUTIVE') or user.hasRole('RECEPTIONIST'))}">
+                            <a class="nav-link" href="/manager/bookings">
+                                <i class="fas fa-calendar-check me-1"></i>Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and user.hasRole('MARKETING_EXECUTIVE')}">
+                            <a class="nav-link" href="/marketing/reports">
+                                <i class="fas fa-chart-bar me-1"></i>Reports
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <!-- Notifications Dropdown -->
+                        <li class="nav-item dropdown" th:if="${user != null}">
+                            <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell me-1"></i>
+                                <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning" th:text="${unreadCount}">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="width: 350px;">
+                                <li class="dropdown-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Notifications</span>
+                                        <a th:href="@{/guest/notifications}" th:if="${user.hasRole('GUEST')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                        <a th:href="@{/manager/notifications}" th:if="${user.hasRole('GENERAL_MANAGER')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                        <a th:href="@{/reception/notifications}" th:if="${user.hasRole('RECEPTIONIST')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                        <a th:href="@{/marketing/notifications}" th:if="${user.hasRole('MARKETING_EXECUTIVE')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                        <a th:href="@{/coordinator/notifications}" th:if="${user.hasRole('EVENT_COORDINATOR')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                        <a th:href="@{/catering/notifications}" th:if="${user.hasRole('CATERING_TEAM_LEADER')}" class="btn btn-sm btn-outline-primary">View All</a>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li th:if="${recentNotifications == null or recentNotifications.empty}" class="dropdown-item-text text-center text-muted">
+                                    <i class="fas fa-bell-slash fa-2x mb-2"></i><br>
+                                    No notifications
+                                </li>
+                                <li th:each="notification : ${recentNotifications}" class="dropdown-item-text">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold" th:text="${notification.alertType}">Alert</div>
+                                            <div class="small" th:text="${notification.messageContent}">Message</div>
+                                            <div class="small text-muted" th:text="${#temporals.format(notification.createdAt, 'MMM dd, HH:mm')}">Time</div>
+                                        </div>
+                                        <span th:if="${!notification.isRead}" class="badge bg-warning ms-2">New</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- User Dropdown -->
+                        <li class="nav-item dropdown" th:if="${user != null}">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>
+                                <span th:text="${user.firstName + ' ' + user.lastName}">User</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/profile">
+                                    <i class="fas fa-user-edit me-1"></i>Profile
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/logout">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item" th:if="${user == null}">
+                            <a class="nav-link" href="/login">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user == null}">
+                            <a class="nav-link" href="/register">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar for authenticated users -->
+                <div class="col-md-2 sidebar" th:if="${user != null}">
+                    <div class="p-3">
+                        <h6 class="text-muted">Navigation</h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                                <a class="nav-link" href="/guest/dashboard">
+                                    <i class="fas fa-home me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                                <a class="nav-link" href="/guest/book-event">
+                                    <i class="fas fa-calendar-plus me-1"></i>Book Event
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                                <a class="nav-link" href="/guest/my-bookings">
+                                    <i class="fas fa-list me-1"></i>My Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                                <a class="nav-link" href="/guest/venues">
+                                    <i class="fas fa-building me-1"></i>View Venues
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GUEST')}">
+                                <a class="nav-link" href="/guest/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Staff Navigation -->
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/bookings">
+                                    <i class="fas fa-calendar-check me-1"></i>All Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/staff">
+                                    <i class="fas fa-users me-1"></i>Manage Staff
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/users">
+                                    <i class="fas fa-user-cog me-1"></i>All Users
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/venues">
+                                    <i class="fas fa-building me-1"></i>Manage Venues
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('GENERAL_MANAGER')}">
+                                <a class="nav-link" href="/manager/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                                <a class="nav-link" href="/reception/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                                <a class="nav-link" href="/reception/verify-booking">
+                                    <i class="fas fa-qrcode me-1"></i>Verify Booking
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                                <a class="nav-link" href="/reception/todays-arrivals">
+                                    <i class="fas fa-calendar-day me-1"></i>Today's Arrivals
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('RECEPTIONIST')}">
+                                <a class="nav-link" href="/reception/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                                <a class="nav-link" href="/marketing/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                                <a class="nav-link" href="/marketing/reports">
+                                    <i class="fas fa-chart-bar me-1"></i>Reports
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('MARKETING_EXECUTIVE')}">
+                                <a class="nav-link" href="/marketing/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                                <a class="nav-link" href="/coordinator/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                                <a class="nav-link" href="/coordinator/tasks">
+                                    <i class="fas fa-tasks me-1"></i>Tasks
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                                <a class="nav-link" href="/coordinator/calendar">
+                                    <i class="fas fa-calendar me-1"></i>Calendar
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('EVENT_COORDINATOR')}">
+                                <a class="nav-link" href="/coordinator/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                                <a class="nav-link" href="/catering/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                                <a class="nav-link" href="/catering/tasks">
+                                    <i class="fas fa-utensils me-1"></i>Catering Tasks
+                                </a>
+                            </li>
+                            <li class="nav-item" th:if="${user.hasRole('CATERING_TEAM_LEADER')}">
+                                <a class="nav-link" href="/catering/notifications">
+                                    <i class="fas fa-bell me-1"></i>Notifications
+                                    <span th:if="${unreadCount != null and unreadCount > 0}" class="badge bg-warning ms-1" th:text="${unreadCount}">0</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="col-md-10 main-content" th:classappend="${user == null ? 'col-md-12' : ''}">
+                    <!-- Flash Messages -->
+                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-1"></i>
+                        <span th:text="${success}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Page Content -->
+                    <div th:replace="${content}">
+                        <!-- Content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Fragment -->
+        <div th:fragment="footer">
+            <!-- Scripts -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+            <script>
+                // Auto-hide alerts after 5 seconds
+                setTimeout(function() {
+                    var alerts = document.querySelectorAll('.alert');
+                    alerts.forEach(function(alert) {
+                        var bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    });
+                }, 5000);
+            </script>
+        </div>
+    </body>
+    </html>
+</div>

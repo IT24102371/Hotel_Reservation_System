@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Marketing Dashboard - Hotel Event Reservation System</title>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-chart-line me-2"></i>Marketing Analytics Dashboard</h2>
+            <span class="text-muted">Welcome, <span th:text="${user.firstName}">Marketing Executive</span></span>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+                        <h4 class="card-title" th:text="${totalBookings}">0</h4>
+                        <p class="card-text">Total Bookings</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                        <h4 class="card-title" th:text="${#numbers.formatDecimal(totalRevenue, 0, 0)}">$0</h4>
+                        <p class="card-text">Revenue (30 days)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                        <h4 class="card-title" th:text="${#numbers.formatDecimal(cancellationRate, 1, 1)}">0%</h4>
+                        <p class="card-text">Cancellation Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-building fa-2x text-info mb-2"></i>
+                        <h4 class="card-title" th:text="${#numbers.formatDecimal(venueOccupancy, 1, 1)}">0%</h4>
+                        <p class="card-text">Venue Occupancy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Booking Trends</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="bookingTrendsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Event Type Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="eventTypeChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Revenue Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Quick Actions -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Generate Reports</h5>
+                        <p class="card-text">Create detailed analytics and export reports in multiple formats.</p>
+                        <a href="/marketing/reports" class="btn btn-primary">
+                            <i class="fas fa-file-alt me-1"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tags fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Promotions</h5>
+                        <p class="card-text">Manage promotional campaigns and special offers.</p>
+                        <a href="/marketing/promotions" class="btn btn-success">
+                            <i class="fas fa-tags me-1"></i>Manage Promotions
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-download fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Export Data</h5>
+                        <p class="card-text">Export analytics data in PDF, CSV, or JSON format.</p>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/marketing/export/PDF?reportType=booking analytics">PDF</a></li>
+                                <li><a class="dropdown-item" href="/marketing/export/CSV?reportType=booking analytics">CSV</a></li>
+                                <li><a class="dropdown-item" href="/marketing/export/JSON?reportType=booking analytics">JSON</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple chart initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for Chart.js to load
+            setTimeout(function() {
+                if (typeof Chart !== 'undefined') {
+                    // Booking Trends Chart
+                    const bookingCtx = document.getElementById('bookingTrendsChart');
+                    if (bookingCtx) {
+                        new Chart(bookingCtx, {
+                            type: 'line',
+                            data: {
+                                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                                datasets: [{
+                                    label: 'Bookings',
+                                    data: [12, 19, 3, 5, 2, 3],
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                    tension: 0.1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false
+                            }
+                        });
+                    }
+
+                    // Event Type Chart
+                    const eventCtx = document.getElementById('eventTypeChart');
+                    if (eventCtx) {
+                        new Chart(eventCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Wedding', 'Corporate', 'Birthday', 'Other'],
+                                datasets: [{
+                                    data: [40, 30, 20, 10],
+                                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false
+                            }
+                        });
+                    }
+
+                    // Revenue Chart
+                    const revenueCtx = document.getElementById('revenueChart');
+                    if (revenueCtx) {
+                        new Chart(revenueCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                                datasets: [{
+                                    label: 'Revenue ($)',
+                                    data: [12000, 19000, 3000, 5000, 2000, 3000],
+                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

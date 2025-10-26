@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Edit Booking - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <h2 class="mb-4"><i class="fas fa-edit me-2"></i>Edit Booking</h2>
+
+        <!-- Mandatory Fields Notice -->
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Required Fields:</strong> Fields marked with <span class="text-danger">*</span> are mandatory and must be filled before submitting your booking.
+        </div>
+
+        <form th:action="@{/guest/update-booking/{id}(id=${booking.bookingId})}" method="post" class="needs-validation" novalidate id="bookingForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Event Type <span class="text-danger">*</span></label>
+                    <input type="text" name="eventType" class="form-control" th:value="${booking.eventType}" placeholder="e.g., Wedding, Conference" required>
+                    <div class="invalid-feedback">Please enter the event type.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Event Date <span class="text-danger">*</span></label>
+                    <input type="date" name="eventDate" class="form-control" th:value="${#temporals.format(booking.eventDate, 'yyyy-MM-dd')}" required>
+                    <div class="invalid-feedback">Please select the event date.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                    <input type="time" name="startTime" class="form-control" th:value="${booking.startTime}" required>
+                    <div class="invalid-feedback">Please select start time.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                    <input type="time" name="endTime" class="form-control" th:value="${booking.endTime}" required>
+                    <div class="invalid-feedback">Please select end time.</div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Guests <span class="text-danger">*</span></label>
+                    <input type="number" name="guestCount" min="1" class="form-control" th:value="${booking.guestCount}" required>
+                    <div class="invalid-feedback">Please enter number of guests (minimum 1).</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Venue <span class="text-danger">*</span></label>
+                    <select name="venueId" class="form-select" required>
+                        <option value="" disabled>Select a venue</option>
+                        <option th:each="v : ${venues}" th:value="${v.venueId}" th:text="${v.venueName + ' (' + v.capacity + ')'}" th:selected="${v.venueId == booking.venue.venueId}"></option>
+                    </select>
+                    <div class="invalid-feedback">Please select a venue.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Special Requests</label>
+                    <textarea name="specialRequests" class="form-control" rows="3" th:text="${booking.specialRequests}" placeholder="Any special requirements or requests for your event..."></textarea>
+                </div>
+            </div>
+
+            <!-- Decor Preferences Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Decor Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Theme</label>
+                            <input type="text" name="theme" class="form-control" th:value="${decorPrefs.theme}" placeholder="e.g., Modern, Classic, Rustic">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Color Scheme</label>
+                            <input type="text" name="colorScheme" class="form-control" th:value="${decorPrefs.colorScheme}" placeholder="e.g., Blue and White, Gold and Silver">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Flower Arrangements</label>
+                            <input type="text" name="flowerArrangements" class="form-control" th:value="${decorPrefs.flowerArrangements}" placeholder="e.g., Roses, Lilies, Mixed Bouquets">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Lighting Preferences</label>
+                            <input type="text" name="lightingPreferences" class="form-control" th:value="${decorPrefs.lightingPreferences}" placeholder="e.g., Soft, Bright, Colored">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Additional Decor Requests</label>
+                            <textarea name="additionalDecorRequests" class="form-control" rows="3" th:text="${decorPrefs.additionalDecorRequests}" placeholder="Any additional decoration requirements..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catering Preferences Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-utensils me-2"></i>Catering Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Meal Type</label>
+                            <select name="mealType" class="form-select">
+                                <option value="">Select meal type</option>
+                                <option value="BREAKFAST" th:selected="${cateringPrefs.mealType != null and cateringPrefs.mealType.name() == 'BREAKFAST'}">Breakfast</option>
+                                <option value="LUNCH" th:selected="${cateringPrefs.mealType != null and cateringPrefs.mealType.name() == 'LUNCH'}">Lunch</option>
+                                <option value="DINNER" th:selected="${cateringPrefs.mealType != null and cateringPrefs.mealType.name() == 'DINNER'}">Dinner</option>
+                                <option value="SNACKS" th:selected="${cateringPrefs.mealType != null and cateringPrefs.mealType.name() == 'SNACKS'}">Snacks</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cuisine Type</label>
+                            <input type="text" name="cuisineType" class="form-control" th:value="${cateringPrefs.cuisineType}" placeholder="e.g., Italian, Indian, Continental">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dietary Restrictions</label>
+                            <input type="text" name="dietaryRestrictions" class="form-control" th:value="${cateringPrefs.dietaryRestrictions}" placeholder="e.g., Vegetarian, Vegan, Gluten-free">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Special Dishes</label>
+                            <input type="text" name="specialDishes" class="form-control" th:value="${cateringPrefs.specialDishes}" placeholder="e.g., Signature dishes, Regional specialties">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Beverage Preferences</label>
+                            <input type="text" name="beveragePreferences" class="form-control" th:value="${cateringPrefs.beveragePreferences}" placeholder="e.g., Coffee, Tea, Soft drinks, Alcoholic beverages">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Serving Style</label>
+                            <select name="servingStyle" class="form-select">
+                                <option value="">Select serving style</option>
+                                <option value="BUFFET" th:selected="${cateringPrefs.servingStyle != null and cateringPrefs.servingStyle.name() == 'BUFFET'}">Buffet</option>
+                                <option value="PLATED" th:selected="${cateringPrefs.servingStyle != null and cateringPrefs.servingStyle.name() == 'PLATED'}">Plated</option>
+                                <option value="FAMILY_STYLE" th:selected="${cateringPrefs.servingStyle != null and cateringPrefs.servingStyle.name() == 'FAMILY_STYLE'}">Family Style</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="/guest/my-bookings" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to My Bookings
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Update Booking
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</body>
+</html>

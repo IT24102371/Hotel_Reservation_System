@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Event Coordinator Dashboard - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tasks me-2"></i>Event Coordinator Dashboard</h2>
+            <span class="text-muted">Welcome, <span th:text="${user.firstName}">Coordinator</span></span>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+                        <h4 class="card-title" th:text="${totalAssigned}">0</h4>
+                        <p class="card-text">Assigned Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4 class="card-title">0</h4>
+                        <p class="card-text">Pending Setup</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4 class="card-title">0</h4>
+                        <p class="card-text">Completed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-bell fa-2x text-info mb-2"></i>
+                        <h4 class="card-title" th:text="${unreadCount}">0</h4>
+                        <p class="card-text">Notifications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Upcoming Events</h5>
+                <a href="/coordinator/tasks" class="btn btn-sm btn-outline-primary">View All Tasks</a>
+            </div>
+            <div class="card-body">
+                <div th:if="${upcomingBookings == null or upcomingBookings.empty}" class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No upcoming events</h5>
+                </div>
+                
+                <div th:if="${upcomingBookings != null and !upcomingBookings.empty}" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Event Type</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                                <th>Setup Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="booking : ${upcomingBookings}">
+                                <td><code th:text="${booking.referenceCode}">REF123</code></td>
+                                <td th:text="${booking.eventType}">Wedding</td>
+                                <td th:text="${#temporals.format(booking.eventDate, 'MMM dd, yyyy')}">Jan 15, 2024</td>
+                                <td th:text="${booking.venue.venueName}">Grand Ballroom</td>
+                                <td>
+                                    <span class="badge bg-warning" th:if="${booking.setupStatus == null}">Pending</span>
+                                    <span class="badge bg-success" th:if="${booking.setupStatus != null}">Complete</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/coordinator/setup/{id}(id=${booking.bookingId})}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-cog"></i> Setup
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Task List</h5>
+                        <p class="card-text">View all assigned events and setup tasks.</p>
+                        <a href="/coordinator/tasks" class="btn btn-primary">
+                            <i class="fas fa-list me-1"></i>View Tasks
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Availability Calendar</h5>
+                        <p class="card-text">Check venue availability for planning.</p>
+                        <a href="/coordinator/calendar" class="btn btn-success">
+                            <i class="fas fa-calendar me-1"></i>View Calendar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bell fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Notifications</h5>
+                        <p class="card-text">View alerts and event updates.</p>
+                        <a href="/coordinator/notifications" class="btn btn-info">
+                            <i class="fas fa-bell me-1"></i>View Alerts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

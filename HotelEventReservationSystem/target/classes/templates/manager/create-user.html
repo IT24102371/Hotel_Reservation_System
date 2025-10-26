@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Create User - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-user-plus me-2"></i>Create New User</h2>
+            <a href="/manager/users" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Users
+            </a>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Create User Form -->
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>User Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/manager/users/create}" method="post">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                        <div class="form-text">Must be unique and contain only letters, numbers, and underscores.</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="roleName" class="form-label">Role <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="roleName" name="roleName" required>
+                                            <option value="">Choose a role...</option>
+                                            <option value="GUEST">Guest</option>
+                                            <option value="GENERAL_MANAGER">General Manager</option>
+                                            <option value="EVENT_COORDINATOR">Event Coordinator</option>
+                                            <option value="CATERING_TEAM_LEADER">Catering Team Leader</option>
+                                            <option value="MARKETING_EXECUTIVE">Marketing Executive</option>
+                                            <option value="RECEPTIONIST">Receptionist</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <div class="form-text">Password must be at least 6 characters long.</div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/manager/users" class="btn btn-secondary me-md-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus me-1"></i>Create User
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Information Card -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Role Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-user me-2"></i>Guest</h6>
+                                <p class="text-muted small">Can book events and view their own bookings.</p>
+                                
+                                <h6><i class="fas fa-crown me-2"></i>General Manager</h6>
+                                <p class="text-muted small">Full system access including user management and all operations.</p>
+                                
+                                <h6><i class="fas fa-calendar-alt me-2"></i>Event Coordinator</h6>
+                                <p class="text-muted small">Manages event setup, coordination, and venue arrangements.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-utensils me-2"></i>Catering Team Leader</h6>
+                                <p class="text-muted small">Manages catering services, inventory, and meal preparations.</p>
+                                
+                                <h6><i class="fas fa-bullhorn me-2"></i>Marketing Executive</h6>
+                                <p class="text-muted small">Handles marketing campaigns, reports, and promotional activities.</p>
+                                
+                                <h6><i class="fas fa-concierge-bell me-2"></i>Receptionist</h6>
+                                <p class="text-muted small">Manages guest arrivals, QR code scanning, and front desk operations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

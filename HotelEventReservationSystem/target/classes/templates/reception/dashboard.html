@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Reception Dashboard - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Reception Dashboard</h2>
+            <span class="text-muted">Welcome, <span th:text="${user.firstName}">Receptionist</span></span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Verify Booking</h5>
+                        <p class="card-text">Check in guests using reference codes or QR codes.</p>
+                        <a href="/reception/verify-booking" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Verify Booking
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-camera fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">QR Scanner</h5>
+                        <p class="card-text">Scan QR codes for quick guest check-in.</p>
+                        <a href="/reception/qr-scanner" class="btn btn-success">
+                            <i class="fas fa-camera me-1"></i>Open Scanner
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-day fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Today's Arrivals</h5>
+                        <p class="card-text">View all expected arrivals for today.</p>
+                        <a href="/reception/todays-arrivals" class="btn btn-info">
+                            <i class="fas fa-list me-1"></i>View Arrivals
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Summary -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Today's Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <h4 class="text-primary">0</h4>
+                                <small class="text-muted">Expected</small>
+                            </div>
+                            <div class="col-4">
+                                <h4 class="text-success">0</h4>
+                                <small class="text-muted">Checked In</small>
+                            </div>
+                            <div class="col-4">
+                                <h4 class="text-warning">0</h4>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Recent Notifications</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-3">
+                            <i class="fas fa-bell-slash fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No recent notifications</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
