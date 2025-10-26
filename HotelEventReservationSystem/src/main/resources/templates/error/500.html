@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Server Error - Hotel Event Reservation System</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center">
+                    <div class="error-template">
+                        <h1 class="display-1 text-danger" th:text="${errorCode}">500</h1>
+                        <h2 th:text="${errorMessage}">Internal Server Error</h2>
+                        <div class="error-details mb-4">
+                            <p class="text-muted" th:text="${errorDescription}">Something went wrong on our end. Please try again later.</p>
+                        </div>
+                        <div class="error-actions">
+                            <a href="/" class="btn btn-primary btn-lg">
+                                <i class="fas fa-home me-2"></i>Go Home
+                            </a>
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg ms-2">
+                                <i class="fas fa-arrow-left me-2"></i>Go Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
